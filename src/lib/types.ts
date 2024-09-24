@@ -1,3 +1,13 @@
+export interface Weekdays {
+  monday: boolean;
+  tuesday: boolean;
+  wednesday: boolean;
+  thursday: boolean;
+  friday: boolean;
+  saturday: boolean;
+  sunday: boolean;
+}
+
 export interface Extra {
   id: string;
   name: string;
@@ -7,9 +17,12 @@ export interface Extra {
 export interface Service {
   id: string;
   name: string;
-  type: 'semanal' | 'mensual';
-  hours: string;
   price: string;
+}
+
+export interface ServiceClient extends Service {
+  weekdays: Weekdays;
+  hours: string;
   extras: Extra[];
 }
 
@@ -25,5 +38,5 @@ export interface Client {
     city: string;
     state: string;
   },
-  services: Service[];
+  services: ServiceClient[];
 }

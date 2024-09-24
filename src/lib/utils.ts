@@ -6,9 +6,8 @@ export function onEnter(ev: KeyboardEvent, callback: () => void) {
 }
 
 export function formatCurrency(value: string) {
-  Intl.NumberFormat('es-ES', {
+  return Intl.NumberFormat('es-ES', {
     style: 'currency',
     currency: 'EUR',
-    minimumFractionDigits: 2
   }).format(Number(value));
 }
