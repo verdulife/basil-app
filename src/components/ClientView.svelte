@@ -20,11 +20,10 @@
 		<p>{client.contact.email}</p>
 
 		<Slider>
-			{#each client.services as { name, price, extras, hours, weekdays }}
+			{#each client.services as { name, price, weekdays }}
 				<Slide>
 					<h2>{name}</h2>
 					<p>Precio: {price}</p>
-					<p>Horas: {hours}</p>
 					<p>
 						Días: {#each Object.entries(weekdays) as [day, isWeekday]}
 							{#if isWeekday}
@@ -32,12 +31,6 @@
 							{/if}
 						{/each}
 					</p>
-					
-					<ul>
-						{#each extras as { name, price }}
-							<li>{name}: {price}</li>
-						{/each}
-					</ul>
 				</Slide>
 			{/each}
 		</Slider>

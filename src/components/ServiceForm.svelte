@@ -1,15 +1,14 @@
 <script lang="ts">
-	import type { Client, Extra, Service, ServiceClient, Weekdays } from '@/lib/types';
-	import { extras, services } from '@/lib/stores';
+	import type { Client, ServiceClient, Log } from '@/lib/types';
 	import { nanoid } from 'nanoid';
-	import { formatCurrency, onEnter } from '@/lib/utils';
+	import { services } from '@/lib/stores';
+	import { formatCurrency } from '@/lib/utils';
+	import { PRICE_TYPE_LIB } from '@/lib/consts';
 
 	import Button from '@/components/ui/Button.svelte';
-	import Trash from '@/assets/Trash.svelte';
 
 	export let client: Client;
-	let currentExtras: Extra[] = [];
-	let extraName: string;
+	let priceType: 'fixed' | 'hourly' = 'fixed';
 	let price: string = '0';
 	let weekdays = {
 		monday: false,
@@ -21,34 +20,10 @@
 		sunday: false
 	};
 
-	function addExtra() {
-		const extra = {
-			id: nanoid(),
-			name: extraName,
-			price: '0'
-		};
-
-		currentExtras = [...currentExtras, extra];
-		extraName = '';
-	}
-
-	function removeExtra(id: string) {
-		currentExtras = currentExtras.filter((extra) => extra.id !== id);
-	}
-
 	function saveServiceIfNew(service: ServiceClient) {
 		const serviceExist = $services.find((s) => s.name.toLowerCase() === service.name.toLowerCase());
-		const { weekdays, hours, extras, ...cleanService } = service;
+		const { weekdays, hours, log, ...cleanService } = service;
 		if (!serviceExist) $services = [...$services, cleanService];
-	}
-
-	function saveExtrasIfNew() {
-		currentExtras.forEach((extra) => {
-			const extraExist = $extras.find(
-				(extra) => extra.name.toLowerCase() === extra.name.toLowerCase()
-			);
-			if (!extraExist) $extras = [...$extras, extra];
-		});
 	}
 
 	function handleSubmit(ev: SubmitEvent) {
@@ -59,17 +34,36 @@
 		const service: ServiceClient = {
 			id: nanoid(),
 			name: formData.get('name') as string,
-			hours: formData.get('hours') as string,
-			weekdays,
 			price: formData.get('price') as string,
-			extras: currentExtras
+			price_type: priceType,
+			weekdays,
+			hours: priceType === 'hourly' ? (formData.get('hours') as string) : null,
+			log: []
 		};
+
+		let basePrice = service.price;
+		if (service.hours) {
+			basePrice = `${Number(service.hours) * Number(service.price)}`;
+		}
+
+		const extraPrice = '0';
+
+		const currentLog: Log = {
+			date: new Date().toISOString(),
+			paid: 'no',
+			paid_amount: '0',
+			extras: [],
+			to_pay: {
+				base: basePrice,
+				extra: extraPrice,
+				total: `${Number(basePrice) + Number(extraPrice)}`
+			}
+		};
+
+		service.log = [...service.log, currentLog];
 		client.services = [...client.services, service];
-
 		saveServiceIfNew(service);
-		saveExtrasIfNew();
 
-		currentExtras = [];
 		target.reset();
 		window.history.back();
 	}
@@ -88,28 +82,21 @@
 			autocomplete="off"
 		/>
 		<datalist id="services">
-			{#each $services as { id, name, price }}
-				<option data-id={id} value={name}>{formatCurrency(price)}</option>
+			{#each $services as { id, name, price, price_type }}
+				<option data-id={id} value={name}
+					>Anterior: {formatCurrency(price)} ({PRICE_TYPE_LIB[price_type]})</option
+				>
 			{/each}
 		</datalist>
 
-		<label for="hours">Horas contratadas al mes</label>
-		<input
-			type="text"
-			id="hours"
-			name="hours"
-			class=" w-full rounded border border-neutral-400 p-2"
-			required
-		/>
-
 		<label for="week">Días de la semana</label>
-		<div class="grid grid-cols-7 gap-2">
+		<div class="grid grid-cols-4 gap-2">
 			<label
 				for="week-1"
-				class="flex cursor-pointer items-center justify-center rounded border border-neutral-400 p-4"
+				class="flex cursor-pointer items-center justify-center overflow-hidden text-ellipsis rounded border border-neutral-400 p-2"
 				class:bg-neutral-200={weekdays.monday}
 			>
-				Lunes
+				<span class="w-full overflow-hidden text-ellipsis text-center">Lunes</span>
 			</label>
 			<input
 				type="checkbox"
@@ -122,10 +109,10 @@
 
 			<label
 				for="week-2"
-				class="flex cursor-pointer items-center justify-center rounded border border-neutral-400 p-4"
+				class="flex cursor-pointer items-center justify-center rounded border border-neutral-400 p-2"
 				class:bg-neutral-200={weekdays.tuesday}
 			>
-				Martes
+				<span class="w-full overflow-hidden text-ellipsis text-center">Martes</span>
 			</label>
 			<input
 				type="checkbox"
@@ -138,10 +125,10 @@
 
 			<label
 				for="week-3"
-				class="flex cursor-pointer items-center justify-center rounded border border-neutral-400 p-4"
+				class="flex cursor-pointer items-center justify-center rounded border border-neutral-400 p-2"
 				class:bg-neutral-200={weekdays.wednesday}
 			>
-				Miércoles
+				<span class="w-full overflow-hidden text-ellipsis text-center">Miércoles</span>
 			</label>
 			<input
 				type="checkbox"
@@ -154,10 +141,10 @@
 
 			<label
 				for="week-4"
-				class="flex cursor-pointer items-center justify-center rounded border border-neutral-400 p-4"
+				class="flex cursor-pointer items-center justify-center rounded border border-neutral-400 p-2"
 				class:bg-neutral-200={weekdays.thursday}
 			>
-				Jueves
+				<span class="w-full overflow-hidden text-ellipsis text-center">Jueves</span>
 			</label>
 			<input
 				type="checkbox"
@@ -170,10 +157,10 @@
 
 			<label
 				for="week-5"
-				class="flex cursor-pointer items-center justify-center rounded border border-neutral-400 p-4"
+				class="flex cursor-pointer items-center justify-center rounded border border-neutral-400 p-2"
 				class:bg-neutral-200={weekdays.friday}
 			>
-				Viernes
+				<span class="w-full overflow-hidden text-ellipsis text-center">Viernes</span>
 			</label>
 			<input
 				type="checkbox"
@@ -186,10 +173,10 @@
 
 			<label
 				for="week-6"
-				class="flex cursor-pointer items-center justify-center rounded border border-neutral-400 p-4"
+				class="flex cursor-pointer items-center justify-center rounded border border-neutral-400 p-2"
 				class:bg-neutral-200={weekdays.saturday}
 			>
-				Sábado
+				<span class="w-full overflow-hidden text-ellipsis text-center">Sábado</span>
 			</label>
 			<input
 				type="checkbox"
@@ -202,10 +189,10 @@
 
 			<label
 				for="week-7"
-				class="flex cursor-pointer items-center justify-center rounded border border-neutral-400 p-4"
+				class="flex cursor-pointer items-center justify-center rounded border border-neutral-400 p-2"
 				class:bg-neutral-200={weekdays.sunday}
 			>
-				Domingo
+				<span class="w-full overflow-hidden text-ellipsis text-center">Domingo</span>
 			</label>
 			<input
 				type="checkbox"
@@ -217,7 +204,51 @@
 			/>
 		</div>
 
-		<label for="price" class="">Precio por hora</label>
+		<label for="price_type">Tipo de precio</label>
+		<div class="grid grid-cols-2 gap-2">
+			<label
+				for="fixed_price"
+				class="flex cursor-pointer items-center justify-center rounded border border-neutral-400 p-2"
+				class:bg-neutral-200={priceType === 'fixed'}>Precio fijo</label
+			>
+			<input
+				type="radio"
+				id="fixed_price"
+				name="price_type"
+				value="fixed"
+				class="sr-only"
+				bind:group={priceType}
+				required
+			/>
+
+			<label
+				for="hourly_price"
+				class="flex cursor-pointer items-center justify-center rounded border border-neutral-400 p-2"
+				class:bg-neutral-200={priceType === 'hourly'}>Precio por hora</label
+			>
+			<input
+				type="radio"
+				id="hourly_price"
+				name="price_type"
+				value="hourly"
+				class="sr-only"
+				bind:group={priceType}
+				required
+			/>
+		</div>
+
+		{#if priceType === 'hourly'}
+			<label for="hours">Horas contratadas al mes</label>
+			<input
+				type="text"
+				id="hours"
+				name="hours"
+				class=" w-full rounded border border-neutral-400 p-2"
+				required
+			/>
+		{/if}
+
+		<label for="price">Precio {priceType === 'hourly' ? 'por hora' : 'fijo'}</label>
 		<div class="relative">
 			<input
 				type="number"
@@ -231,47 +262,6 @@
 			<span class="pointer-events-none absolute left-0 w-full rounded border border-neutral-400 p-2"
 				>{formatCurrency(price)}</span
 			>
-		</div>
-
-		<label for="extras" class="">Extras</label>
-
-		{#if currentExtras.length}
-			<ul class="flex flex-col gap-2">
-				{#each currentExtras as { id, name, price }}
-					<li class="flex items-center gap-2 rounded border border-neutral-400 bg-neutral-200 p-2">
-						<p class="w-full">{name}</p>
-						<input
-							type="text"
-							name="extra_price"
-							value={price}
-							class="rounded border border-neutral-400 p-2"
-						/>
-						<button type="button" on:click={() => removeExtra(id)}>
-							<Trash />
-						</button>
-					</li>
-				{/each}
-			</ul>
-		{/if}
-
-		<div class="flex items-center gap-2">
-			<input
-				list="extras"
-				type="text"
-				id="currentExtras"
-				name="currentExtras"
-				class="w-full rounded border border-neutral-400 p-2"
-				bind:value={extraName}
-				on:keydown={(ev) => onEnter(ev, addExtra)}
-				autocomplete="off"
-			/>
-			<datalist id="extras">
-				{#each $extras as { name, price }}
-					<option value={name}>{formatCurrency(price)}</option>>
-				{/each}
-			</datalist>
-
-			<Button type="button" on:click={addExtra}>Añadir</Button>
 		</div>
 
 		<Button class="mt-4">Registrar</Button>

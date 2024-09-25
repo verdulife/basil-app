@@ -14,3 +14,8 @@ export const WEEKDAYS_LIB: Record<string, string> = {
   saturday: "sábado",
   sunday: "domingo"
 };
+
+export const PRICE_TYPE_LIB: Record<string, string> = {
+  fixed: "fijo",
+  hourly: "por hora"
+};

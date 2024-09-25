@@ -14,16 +14,29 @@ export interface Extra {
   price: string;
 }
 
+export interface Log {
+  date: string;
+  paid: "no" | "partial" | "paid";
+  paid_amount: string;
+  extras: Extra[];
+  to_pay: {
+    base: string;
+    extra: string;
+    total: string;
+  }
+}
+
 export interface Service {
   id: string;
   name: string;
   price: string;
+  price_type: 'fixed' | 'hourly';
 }
 
 export interface ServiceClient extends Service {
   weekdays: Weekdays;
-  hours: string;
-  extras: Extra[];
+  hours: string | null;
+  log: Log[];
 }
 
 export interface Client {
