@@ -4,7 +4,7 @@
 
 <button
 	{type}
-	class={`rounded bg-green-400 px-6 py-3 text-sm font-medium ${$$props.class}`}
+	class={`rounded bg-green-400 px-6 py-3 text-sm font-medium text-center ${$$props.class}`}
 	on:click
 >
 	<slot />

@@ -1,29 +1,9 @@
-export interface Weekdays {
-  monday: boolean;
-  tuesday: boolean;
-  wednesday: boolean;
-  thursday: boolean;
-  friday: boolean;
-  saturday: boolean;
-  sunday: boolean;
-}
+export type Weekday = "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday" | "sunday";
 
 export interface Extra {
   id: string;
   name: string;
   price: string;
-}
-
-export interface Log {
-  date: string;
-  paid: "no" | "partial" | "paid";
-  paid_amount: string;
-  extras: Extra[];
-  to_pay: {
-    base: string;
-    extra: string;
-    total: string;
-  }
 }
 
 export interface Service {
@@ -34,9 +14,16 @@ export interface Service {
 }
 
 export interface ServiceClient extends Service {
-  weekdays: Weekdays;
+  weekday: Weekday;
   hours: string | null;
-  log: Log[];
+  date: string;
+  paid: "no" | "partial" | "paid";
+  paid_amount: string;
+  to_pay: {
+    base: string;
+    extra: string;
+    total: string;
+  }
 }
 
 export interface Client {
